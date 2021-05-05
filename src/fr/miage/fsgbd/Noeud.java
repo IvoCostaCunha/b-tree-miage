@@ -6,17 +6,18 @@ import java.util.ArrayList;
 /*
  * Classe de gestion des noeuds du b+Arbre
  * @author LAUGIER Vincent; COFFRE Jean-Denis
+ * @author Galli Gregory, Mopolo Moke Gabriel
  */
 public class Noeud<Type> implements java.io.Serializable {
 
 
-    // Collection des Noeuds enfants du noeud
+    // Collection des Noeuds enfants du noeud courant
     public ArrayList<Noeud<Type>> fils = new ArrayList<Noeud<Type>>();
 
-    // Collection des clés du noeud
+    // Collection des clés du noeud courant
     public ArrayList<Type> keys = new ArrayList<Type>();
 
-    // Noeud Parent
+    // Noeud Parent du noeud courant
     private Noeud<Type> parent;
 
     // Classe interfaçant "Executable" et donc contenant une procédure de comparaison de <Type>
@@ -41,14 +42,10 @@ public class Noeud<Type> implements java.io.Serializable {
         return compar.execute(arg1, arg2);
     }
 
-    public Noeud<Type> ajoutValeur(Type valeur) {
-
-        return null;
-    }
-
-    /* Cherche une valeur dans la branche
+    /**
+     * Cherche une valeur dans la branche
      * @param valeur Valeur à rechercher dans la branche
-     * @return Vrai si la valeur est trouvée, sinon non
+     * @return le Noeud trouvé / null
      */
     public Noeud<Type> contient(Type valeur) {
         Noeud<Type> retour = null;
@@ -70,6 +67,11 @@ public class Noeud<Type> implements java.io.Serializable {
         return retour;
     }
 
+    /**
+     * Permet de trouver le noeud ou ajouter la valeur
+     * @param valeur que l'on souhaite insérer
+     * @return le Noeud choisi
+     */
     public Noeud<Type> choixNoeudAjout(Type valeur) {
         Noeud<Type> retour = null;
 
@@ -90,6 +92,11 @@ public class Noeud<Type> implements java.io.Serializable {
         return retour;
     }
 
+    /**
+     * Méthode d'affichage pour le contenu d'un noeud
+     * @param afficheSousNoeuds détermine si l'on doit s'interesser aux sous arbres
+     * @param lvl la profondeur
+     */
     public void afficheNoeud(boolean afficheSousNoeuds, int lvl) {
 
         StringBuilder dots = new StringBuilder();
@@ -112,6 +119,10 @@ public class Noeud<Type> implements java.io.Serializable {
     }
 
 
+    /**
+     * Insère une clef dans le noeud courant
+     * @param valeur à ajouter aux clefs du noeud courant
+     */
     private void insert(Type valeur) {
         int i = 0;
         while ((this.keys.size() > i) && compare(this.keys.get(i), valeur)) {
@@ -143,6 +154,10 @@ public class Noeud<Type> implements java.io.Serializable {
         return racine;
     }
 
+    /**
+     * Ajoute un noeud fils au noeud courant
+     * @param noeud à ajouter
+     */
     public void addNoeud(Noeud<Type> noeud) {
         int i = 0;
 
@@ -155,10 +170,20 @@ public class Noeud<Type> implements java.io.Serializable {
         }
     }
 
+    /**
+     * Retire un fils au noeud courant
+     * @param noeud à retirer
+     * @return boolean
+     */
     public boolean removeNoeud(Noeud<Type> noeud) {
         return fils.remove(noeud);
     }
 
+    /**
+     * Retire une clef au noeud courant
+     * @param valeur à retirer
+     * @return la <Noeud>racine</Noeud> de l'arbre
+     */
     public Noeud<Type> removeValeur(Type valeur) {
         Noeud<Type> noeud, racine, noeud2 = this;
         Type eleMedian;
@@ -260,6 +285,12 @@ public class Noeud<Type> implements java.io.Serializable {
         return racine;
     }
 
+    /**
+     * Ajoute une clef au noeud courant, ceci est une fonction récursive
+     * @param nouvelleValeur à ajouter
+     * @param force, booléen spécificiant que l'on doit ajouter au noeud courant et non pas chercher l'endroit où insérer la nouvelle valeur
+     * @return la <Noeud>racine</Noeud> de l'arbre
+     */
     public Noeud<Type> addValeur(Type nouvelleValeur, boolean force) {
 
         // Initialisation des variables

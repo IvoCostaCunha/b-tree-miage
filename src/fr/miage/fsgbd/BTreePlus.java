@@ -3,6 +3,10 @@ package fr.miage.fsgbd;
 import javax.swing.tree.DefaultMutableTreeNode;
 
 
+/**
+ * @author Galli Gregory, Mopolo Moke Gabriel
+ * @param <Type>
+ */
 public class BTreePlus<Type> implements java.io.Serializable {
     private Noeud<Type> racine;
 

@@ -7,7 +7,9 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-
+/**
+ * @author Galli Gregory, Mopolo Moke Gabriel
+ */
 public class GUI extends JFrame implements ActionListener {
     TestInteger testInt = new TestInteger();
     BTreePlus<Integer> bInt;
