@@ -63,7 +63,7 @@ public class GUI extends JFrame implements ActionListener {
                     System.out.println("Tentative d'ajout d'une valeur existante : " + txtNbreSpecificItem.getText());
                 txtNbreSpecificItem.setText(
                         String.valueOf(
-                                Integer.parseInt(txtNbreSpecificItem.getText()) + 1
+                                Integer.parseInt(txtNbreSpecificItem.getText()) + 2
                         )
                 );
 

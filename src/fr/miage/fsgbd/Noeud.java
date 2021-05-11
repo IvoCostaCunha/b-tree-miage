@@ -131,6 +131,14 @@ public class Noeud<Type> implements java.io.Serializable {
         this.keys.add(i, valeur);
     }
 
+    /**
+     * Retire une clef dans le noeud courant
+     * @param valeur à retirer des clefs du noeud courant
+     */
+    private void removeKey(Type valeur) {
+        this.keys.remove(valeur);
+    }
+
 
     /*
      * Algo d'ajout de données dans l'arbre :
@@ -184,103 +192,61 @@ public class Noeud<Type> implements java.io.Serializable {
      * @param valeur à retirer
      * @return la <Noeud>racine</Noeud> de l'arbre
      */
-    public Noeud<Type> removeValeur(Type valeur) {
-        Noeud<Type> noeud, racine, noeud2 = this;
+    public Noeud<Type> removeValeur(Type valeur, boolean force) {
+        System.out.println("removeValeur : "+valeur+", force : "+force);
+        Noeud<Type> noeud, racine = this;
         Type eleMedian;
         int indexMedian;
 
-        while (noeud2.parent != null)
-            noeud2 = noeud2.parent;
+        // On remonte jusqu'à la racine à partir du noeud courant
+        while (racine.parent != null)
+            racine = racine.parent;
 
-        racine = noeud2;
+        if (!force)
+            noeud = this.contient(valeur);
+        else noeud = this;
 
-        noeud = this.contient(valeur);
         if (noeud == null) {
             System.out.println("Tentative de suppression d'une valeur inexistante dans l'arbre : " + valeur);
             return racine;
         }
+        else if (force && noeud.parent != null)
+            noeud.parent.removeValeur(valeur, true);
 
         int tailleListe = noeud.keys.size();
 
         System.out.println(noeud);
 
-        if (!noeud.keys.contains(valeur)) {
-//			if (tailleListe == u)
-//			{
-//				Noeud<Type> noeudGauche = new Noeud<Type>(u, compar, null);
-//				Noeud<Type> noeudDroit = new Noeud<Type>(u, compar, null);
-//
-//				noeud.insert(nouvelleValeur);
-//				tailleListe++;
-//
-//				if (tailleListe % 2 == 0) //pair
-//					indexMedian = 1 + (tailleListe / 2);
-//				else
-//					indexMedian = (1 + tailleListe) / 2;
-//
-//				indexMedian--;
-//
-//				eleMedian = noeud.keys.get(indexMedian);
-//
-//				for(int i=0;i < indexMedian;i++)
-//					noeudGauche.addValeur(noeud.keys.get(i));
-//
-//
-//				if (!noeud.fils.isEmpty())
-//				{
-//					for(int i=indexMedian+1;i < tailleListe;i++)
-//						noeudDroit.addValeur(noeud.keys.get(i));
-//				}
-//				else
-//				{
-//					for(int i=indexMedian;i < tailleListe;i++)
-//						noeudDroit.addValeur(noeud.keys.get(i));
-//				}
-//
-//				if (!noeud.fils.isEmpty())
-//				{
-//					indexMedian++;
-//
-//					for(int i=0;i < (indexMedian);i++)
-//					{
-//						noeudGauche.addNoeud(noeud.fils.get(i));
-//						noeud.fils.get(i).parent = noeudGauche;
-//					}
-//
-//
-//					for(int i=(indexMedian);i < noeud.fils.size() ;i++)
-//					{
-//						noeudDroit.addNoeud(noeud.fils.get(i));
-//						noeud.fils.get(i).parent = noeudDroit;
-//					}
-//				}
-//
-//				if (noeud.parent == null)
-//				{
-//					Noeud<Type> nouveauParent = new Noeud<Type>(u, compar, null);
-//
-//					nouveauParent.addNoeud(noeudGauche);
-//					nouveauParent.addNoeud(noeudDroit);
-//					noeudGauche.parent = nouveauParent;
-//					noeudDroit.parent = nouveauParent;
-//					nouveauParent.addValeur(eleMedian, true);
-//
-//					racine = nouveauParent;
-//				}
-//				else
-//				{
-//					noeud.parent.addNoeud(noeudGauche);
-//					noeud.parent.addNoeud(noeudDroit);
-//					noeud.parent.removeNoeud(noeud);
-//					noeudGauche.parent = noeud.parent;
-//					noeudDroit.parent = noeud.parent;
-//					racine = noeud.parent.addValeur(eleMedian, true);
-//				}
-//
-//			}
-//			else
-//				noeud.insert(nouvelleValeur);
+        if (noeud.keys.contains(valeur)) {
+            //Regroupement : Si le nombre de clef dans le noeud devient inférieur au minimum (m)
+            System.out.println("tailleListe :"+tailleListe);
+            System.out.println("u :"+u);
+
+			if (tailleListe-1 < u/2)
+			{
+			    // On retire la clef du noeud courant
+                noeud.removeKey(valeur);
+                if (noeud.parent != null) {
+                    // On retire le noeud courant de l'arbre
+                    noeud.parent.removeNoeud(noeud);
+                    // On réattribue les clefs au parent
+                    for (Type key : noeud.keys)
+                        noeud.parent.addValeur(key);
+                    // On rappelle la fonction pour effacer les éventuelles traces de la clef effacée dans les parents
+                    noeud.parent.removeValeur(valeur, true);
+                }
+
+                // TODO : Si la clef effacée dans un parent n'est pas associé à une suppression d'un fils, il faut remplacer la clef dans le parent par la clef suivante du fils auquel on a retiré sa clef
+			}
+			else {
+                noeud.removeKey(valeur);
+                if (noeud.parent != null)
+                    noeud.parent.removeValeur(valeur, true);
+            }
         }
+        else if (noeud.parent != null)
+            noeud.parent.removeValeur(valeur, true);
+
 
         return racine;
     }

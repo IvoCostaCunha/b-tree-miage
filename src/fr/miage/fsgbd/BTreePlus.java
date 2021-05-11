@@ -55,7 +55,7 @@ public class BTreePlus<Type> implements java.io.Serializable {
     public void removeValeur(Type valeur) {
         System.out.println("Retrait de la valeur : " + valeur.toString());
         if (racine.contient(valeur) != null) {
-            Noeud<Type> newRacine = racine.removeValeur(valeur);
+            Noeud<Type> newRacine = racine.removeValeur(valeur, false);
             if (racine != newRacine)
                 racine = newRacine;
         }
