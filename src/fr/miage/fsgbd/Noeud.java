@@ -24,7 +24,7 @@ public class Noeud<Type> implements java.io.Serializable {
     private Executable compar;
 
     // Ordre de l'abre (u = nombre de clés maximum = 2m)
-    private final int u;
+    private final int u, tailleMin;
 
 
     /* Constructeur de la classe noeud, qui permet l'ajout et la recherche d'élément dans les branches
@@ -34,6 +34,7 @@ public class Noeud<Type> implements java.io.Serializable {
      */
     public Noeud(int u, Executable e, Noeud<Type> parent) {
         this.u = u;
+        this.tailleMin = u/2;
         compar = e;
         this.parent = parent;
     }
@@ -195,7 +196,7 @@ public class Noeud<Type> implements java.io.Serializable {
     public Noeud<Type> removeValeur(Type valeur, boolean force) {
         System.out.println("removeValeur : "+valeur+", force : "+force);
         Noeud<Type> noeud, racine = this;
-        Type eleMedian;
+        Type eleMedian, nouvelleClef = null;
         int indexMedian;
 
         // On remonte jusqu'à la racine à partir du noeud courant
@@ -210,45 +211,170 @@ public class Noeud<Type> implements java.io.Serializable {
             System.out.println("Tentative de suppression d'une valeur inexistante dans l'arbre : " + valeur);
             return racine;
         }
-        else if (force && noeud.parent != null)
-            noeud.parent.removeValeur(valeur, true);
 
-        int tailleListe = noeud.keys.size();
+        noeud.removeKey(valeur);
 
-        System.out.println(noeud);
+        int keyCount = noeud.keys.size();
 
-        if (noeud.keys.contains(valeur)) {
-            //Regroupement : Si le nombre de clef dans le noeud devient inférieur au minimum (m)
-            System.out.println("tailleListe :"+tailleListe);
-            System.out.println("u :"+u);
-
-			if (tailleListe-1 < u/2)
-			{
-			    // On retire la clef du noeud courant
-                noeud.removeKey(valeur);
-                if (noeud.parent != null) {
-                    // On retire le noeud courant de l'arbre
-                    noeud.parent.removeNoeud(noeud);
-                    // On réattribue les clefs au parent
-                    for (Type key : noeud.keys)
-                        noeud.parent.addValeur(key);
-                    // On rappelle la fonction pour effacer les éventuelles traces de la clef effacée dans les parents
-                    noeud.parent.removeValeur(valeur, true);
+        if (keyCount < tailleMin)
+        {
+            if (noeud.parent != null)
+            {
+                // On va aller chercher dans le noeud suivant
+                Noeud<Type> suivant = noeud.getNoeudSuivant();
+                Type remplacant = null;
+                Type valeurARemplacer = null;
+                // Si le noeud suivant existe et possède assez de clefs
+                if (suivant != null && suivant.keys.size() > tailleMin)
+                {
+                    remplacant = suivant.keys.get(0);
+                    // On ajoute la première clef du noeud suivant au noeud courant
+                    noeud.keys.add(remplacant);
+                    // Et on la retire des clefs du noeud suivant
+                    suivant.keys.remove(remplacant);
+                    // On remplace alors dans les noeuds parents la valeur qui a été récupérée dans le noeud suivant par la nouvelle "première valeur"
+                    remplacerDansParents(noeud.parent, remplacant, suivant.keys.get(0));
+                    // Et on remplace la valeur qu'on a effacé par la valeur qui a pris sa place
+                    remplacerDansParents(noeud.parent, valeur, noeud.keys.get(0));
                 }
+                else
+                {
+                    // Sinon on ira chercher dans le noeud précédent
+                    Noeud<Type> precedent = noeud.getNoeudPrecedent();
+                    // S'il y a un précédent et que celui ci possède assez de clefs
+                    if (precedent != null && precedent.keys.size() > tailleMin)
+                    {
+                        // On prend la dernière clef
+                        remplacant = precedent.keys.get(precedent.keys.size()-1);
+                        // On l'ajoute au noeud courant
+                        noeud.addValeur(remplacant, true);
+                        // Et on la retire des clefs du noeud précédent
+                        precedent.keys.remove(remplacant);
+                        // Et on remplace la valeur qu'on a effacé par la valeur qui a pris sa place
+                        remplacerDansParents(noeud.parent, valeur, noeud.keys.get(0));
+                    }
+                    else // Sinon, on va devoir merge le noeud courant avec le suivant ou le précédent
+                    {
+                        // On tente d'abord avec le précédent
+                        if (precedent != null && precedent.keys.size() < u)
+                        {
+                            while(!noeud.keys.isEmpty() && precedent.keys.size() < u)
+                            {
+                                Type valeurADeplacer = noeud.keys.get(0);
+                                precedent.keys.add(valeurADeplacer);
+                                noeud.keys.remove(0);
+                                if (!noeud.keys.isEmpty())
+                                    remplacerDansParents(noeud,valeurADeplacer, noeud.keys.get(0));
+                                else if (suivant != null && !suivant.keys.isEmpty())
+                                    remplacerDansParents(noeud,valeurADeplacer, suivant.keys.get(0));
+                                else
+                                    noeud.parent.keys.remove(valeurADeplacer);
+                            }
+                        }
+                        else if (!noeud.keys.isEmpty() && suivant != null && suivant.keys.size() < u) // puis avec le suivant
+                        {
+                            while(!noeud.keys.isEmpty() && suivant.keys.size() < u)
+                            {
+                                // On shift les clefs de suivant vers la droite
+                                for (int i = suivant.keys.size(); i > 0 ; i--)
+                                {
+                                    suivant.keys.set(i, suivant.keys.get(i-1));
+                                }
+                                suivant.keys.set(0,noeud.keys.get(noeud.keys.size()-1));
+                                noeud.keys.remove(noeud.keys.size()-1);
+                            }
+                        }
+                        else // si pas de précédent ou de suivant / pas de place / le noeud courant est le seul fils > On réduit la hauteur
+                        {
 
-                // TODO : Si la clef effacée dans un parent n'est pas associé à une suppression d'un fils, il faut remplacer la clef dans le parent par la clef suivante du fils auquel on a retiré sa clef
-			}
-			else {
-                noeud.removeKey(valeur);
-                if (noeud.parent != null)
-                    noeud.parent.removeValeur(valeur, true);
+                        }
+
+                        if (noeud.keys.isEmpty())
+                        {
+                            noeud.parent.keys.remove(noeud.parent.fils.indexOf(noeud)-1);
+                            noeud.parent.removeNoeud(noeud);
+                        }
+
+
+                    }
+
+                }
             }
+
         }
-        else if (noeud.parent != null)
-            noeud.parent.removeValeur(valeur, true);
+        else
+            remplacerDansParents(noeud, valeur, noeud.keys.get(0));
+
+        if (noeud.parent != null && noeud.parent.fils.size() <= 1)
+        {
+            noeud.parent.keys.addAll(noeud.parent.fils.get(0).keys);
+            noeud.parent.fils.clear();
+        }
 
 
         return racine;
+    }
+
+    public void remplacerDansParents(Noeud<Type> noeud, Type aRemplacer, Type remplacant)
+    {
+        if (noeud.keys.contains(aRemplacer))
+        {
+            noeud.keys.set(noeud.keys.indexOf(aRemplacer), remplacant);
+        }
+        if (noeud.parent != null)
+            remplacerDansParents(noeud.parent, aRemplacer, remplacant);
+    }
+
+    public Noeud<Type> getNoeudSuivant()
+    {
+        Noeud<Type> suivant = null;
+        if (this.parent != null)
+        {
+            Noeud<Type> parent = this.parent;
+            boolean trouve = false;
+            for (Noeud<Type> fils : parent.fils)
+            {
+                if (trouve) {
+                    suivant = fils;
+                    break;
+                }
+                // Si le fils que l'on analyse est le noeud dont on cherche le noeud suivant alors on prendra le prochain fils
+                // Il sera retourné à la prochaine itération si prochaine itération il y a, sinon pas de next
+                if (fils == this)
+                    trouve = true;
+            }
+        }
+        return suivant;
+    }
+
+    public Noeud<Type> getNoeudPrecedent()
+    {
+        Noeud<Type> precedent = null;
+        if (this.parent != null)
+        {
+            Noeud<Type> parent = this.parent;
+            for (int i = 0; i < parent.fils.size() ; i++)
+            {
+                // Si le fils que l'on analyse est le noeud dont on cherche le précédent alors on retourne le fils précédent
+                if ( i != 0 && parent.fils.get(i) == this) {
+                    precedent = parent.fils.get(i - 1);
+                    break;
+                }
+            }
+        }
+        return precedent;
+    }
+
+    public boolean parentContient(Noeud<Type> noeud, Type valeur)
+    {
+        boolean trouve = false;
+        while (noeud.parent != null)
+        {
+            noeud = noeud.parent;
+            if (noeud.contient(valeur) != null)
+                trouve = true;
+        }
+        return trouve;
     }
 
     /**
