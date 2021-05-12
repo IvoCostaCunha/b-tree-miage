@@ -212,12 +212,16 @@ public class Noeud<Type> implements java.io.Serializable {
             return racine;
         }
 
+        // On retire la clef, on verifiera apres si tout va bien
         noeud.removeKey(valeur);
 
+        // On regarde le nombre de clef dans le noeud apres avoir effacé
         int keyCount = noeud.keys.size();
 
+        // Si la taille du noeud devient insuffisante alors, il faudra appliquer une stratégie pour revenir dans un état "normal"
         if (keyCount < tailleMin)
         {
+            // Si on est pas à la racine
             if (noeud.parent != null)
             {
                 // On va aller chercher dans le noeud suivant
@@ -258,6 +262,7 @@ public class Noeud<Type> implements java.io.Serializable {
                         // On tente d'abord avec le précédent
                         if (precedent != null && precedent.keys.size() < u)
                         {
+                            // On mets toutes les clefs restantes dans le noeud courant dans le noeud précédent tant que ce dernier peut en accueillir
                             while(!noeud.keys.isEmpty() && precedent.keys.size() < u)
                             {
                                 Type valeurADeplacer = noeud.keys.get(0);
@@ -265,7 +270,7 @@ public class Noeud<Type> implements java.io.Serializable {
                                 noeud.keys.remove(0);
                             }
                         }
-                        else if (!noeud.keys.isEmpty() && suivant != null && suivant.keys.size() < u) // puis avec le suivant
+                        else if (!noeud.keys.isEmpty() && suivant != null && suivant.keys.size() < u) // Même opération avec le noeud suivant
                         {
                             while(!noeud.keys.isEmpty() && suivant.keys.size() < u)
                             {
@@ -276,9 +281,22 @@ public class Noeud<Type> implements java.io.Serializable {
                         }
                         else // si pas de précédent ou de suivant / pas de place / le noeud courant est le seul fils > On réduit la hauteur
                         {
-                            System.out.println("Cas non géré");
+                            ArrayList<Type> keyz = new ArrayList<>();
+                            // On rééquilibre l'arbre
+                            racine.reequilibrer(keyz);
+                            racine.fils.clear();
+                            racine.keys.clear();
+                            for (Type key : keyz)
+                            {
+                                if (racine.contient(valeur) == null) {
+                                    Noeud<Type> newRacine = racine.addValeur(key);
+                                    if (racine != newRacine)
+                                        racine = newRacine;
+                                }
+                            }
                         }
 
+                        // Si le noeud courant est vide, alors il faut retirer le noeud des fils du parent
                         if (noeud.keys.isEmpty())
                         {
                             int index = Math.max(noeud.parent.fils.indexOf(noeud)-1, 0);
@@ -291,11 +309,12 @@ public class Noeud<Type> implements java.io.Serializable {
             }
 
         }
-        else
+        else // Si la clef que l'on a effacé était présente dans les clefs des noeuds parents, on remplace de manière récursive
             remplacerDansParents(noeud, valeur, noeud.keys.get(0));
 
+        // Enfin, si le parent du noeud courant n'a qu'un seul fils
         if (noeud.parent != null && noeud.parent.fils.size() <= 1)
-        {
+        {   // On rééquilibre l'arbre ( pour potentiellement dimunuer la hauteur de l'arbre )
             if (noeud.parent.getNoeudSuivant() != null || noeud.parent.getNoeudPrecedent() != null )
             {
                 System.out.println("Besoin de rééquilibrer l'arbre");
@@ -305,10 +324,14 @@ public class Noeud<Type> implements java.io.Serializable {
                 racine.keys.clear();
                 for (Type key : keyz)
                 {
-                    racine.addValeur(key,false);
+                    if (racine.contient(valeur) == null) {
+                        Noeud<Type> newRacine = racine.addValeur(key);
+                        if (racine != newRacine)
+                            racine = newRacine;
+                    }
                 }
             }
-            else
+            else // Et s'il n'y a pas de noeuds capable d'accueillir les clefs elles sont remontées au niveau du parent et ce dernier devient une feuille
             {
                 noeud.parent.keys.addAll(noeud.parent.fils.get(0).keys);
                 noeud.parent.fils.clear();
