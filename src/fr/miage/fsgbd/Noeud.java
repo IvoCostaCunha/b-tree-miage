@@ -263,39 +263,28 @@ public class Noeud<Type> implements java.io.Serializable {
                                 Type valeurADeplacer = noeud.keys.get(0);
                                 precedent.keys.add(valeurADeplacer);
                                 noeud.keys.remove(0);
-                                if (!noeud.keys.isEmpty())
-                                    remplacerDansParents(noeud,valeurADeplacer, noeud.keys.get(0));
-                                else if (suivant != null && !suivant.keys.isEmpty())
-                                    remplacerDansParents(noeud,valeurADeplacer, suivant.keys.get(0));
-                                else
-                                    noeud.parent.keys.remove(valeurADeplacer);
                             }
                         }
                         else if (!noeud.keys.isEmpty() && suivant != null && suivant.keys.size() < u) // puis avec le suivant
                         {
                             while(!noeud.keys.isEmpty() && suivant.keys.size() < u)
                             {
-                                // On shift les clefs de suivant vers la droite
-                                for (int i = suivant.keys.size(); i > 0 ; i--)
-                                {
-                                    suivant.keys.set(i, suivant.keys.get(i-1));
-                                }
-                                suivant.keys.set(0,noeud.keys.get(noeud.keys.size()-1));
+                                suivant.keys.add(0,noeud.keys.get(noeud.keys.size()-1));
+                                remplacerDansParents(noeud,suivant.keys.get(1), suivant.keys.get(0));
                                 noeud.keys.remove(noeud.keys.size()-1);
                             }
                         }
                         else // si pas de précédent ou de suivant / pas de place / le noeud courant est le seul fils > On réduit la hauteur
                         {
-
+                            System.out.println("Cas non géré");
                         }
 
                         if (noeud.keys.isEmpty())
                         {
-                            noeud.parent.keys.remove(noeud.parent.fils.indexOf(noeud)-1);
+                            int index = Math.max(noeud.parent.fils.indexOf(noeud)-1, 0);
+                            noeud.parent.keys.remove(index);
                             noeud.parent.removeNoeud(noeud);
                         }
-
-
                     }
 
                 }
@@ -307,12 +296,41 @@ public class Noeud<Type> implements java.io.Serializable {
 
         if (noeud.parent != null && noeud.parent.fils.size() <= 1)
         {
-            noeud.parent.keys.addAll(noeud.parent.fils.get(0).keys);
-            noeud.parent.fils.clear();
+            if (noeud.parent.getNoeudSuivant() != null || noeud.parent.getNoeudPrecedent() != null )
+            {
+                System.out.println("Besoin de rééquilibrer l'arbre");
+                ArrayList<Type> keyz = new ArrayList<>();
+                racine.reequilibrer(keyz);
+                racine.fils.clear();
+                racine.keys.clear();
+                for (Type key : keyz)
+                {
+                    racine.addValeur(key,false);
+                }
+            }
+            else
+            {
+                noeud.parent.keys.addAll(noeud.parent.fils.get(0).keys);
+                noeud.parent.fils.clear();
+            }
         }
 
 
         return racine;
+    }
+
+    public void reequilibrer(ArrayList<Type> keyz)
+    {
+        for(Noeud<Type> noeud : this.fils)
+        {
+            if (noeud.fils.isEmpty())
+                keyz.addAll(noeud.keys);
+            else
+            {
+                for (Noeud<Type> fils : noeud.fils)
+                    fils.reequilibrer(keyz);
+            }
+        }
     }
 
     public void remplacerDansParents(Noeud<Type> noeud, Type aRemplacer, Type remplacant)
@@ -407,7 +425,7 @@ public class Noeud<Type> implements java.io.Serializable {
         if (!noeud.keys.contains(nouvelleValeur)) {
 
             // Si le nombre de clef du noeud courant est égal au nom max d'éléments (2m)
-            if (tailleListe == u) {
+            if (tailleListe >= u) {
 
 
                 // On crée deux nouveaux noeuds

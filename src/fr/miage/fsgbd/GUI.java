@@ -6,6 +6,7 @@ import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 
 /**
  * @author Galli Gregory, Mopolo Moke Gabriel
@@ -13,7 +14,7 @@ import java.awt.event.ActionListener;
 public class GUI extends JFrame implements ActionListener {
     TestInteger testInt = new TestInteger();
     BTreePlus<Integer> bInt;
-    private JButton buttonClean, buttonRemove, buttonLoad, buttonSave, buttonAddMany, buttonAddItem;
+    private JButton buttonClean, buttonRemove, buttonLoad, buttonSave, buttonAddMany, buttonAddItem, buttonRefresh;
     private JTextField txtNbreItem, txtNbreSpecificItem, txtU, txtFile, removeSpecific;
     private final JTree tree = new JTree();
 
@@ -23,7 +24,7 @@ public class GUI extends JFrame implements ActionListener {
     }
 
     public void actionPerformed(ActionEvent e) {
-        if (e.getSource() == buttonLoad || e.getSource() == buttonClean || e.getSource() == buttonSave) {
+        if (e.getSource() == buttonLoad || e.getSource() == buttonClean || e.getSource() == buttonSave || e.getSource() == buttonRefresh) {
             if (e.getSource() == buttonLoad) {
                 BDeserializer<Integer> load = new BDeserializer<Integer>();
                 bInt = load.getArbre(txtFile.getText());
@@ -37,6 +38,8 @@ public class GUI extends JFrame implements ActionListener {
                     bInt = new BTreePlus<Integer>(Integer.parseInt(txtU.getText()), testInt);
             } else if (e.getSource() == buttonSave) {
                 BSerializer<Integer> save = new BSerializer<Integer>(bInt, txtFile.getText());
+            }else if (e.getSource() == buttonRefresh) {
+                tree.updateUI();
             }
         } else {
             if (bInt == null)
@@ -207,12 +210,19 @@ public class GUI extends JFrame implements ActionListener {
         c.gridwidth = 2;
         pane1.add(buttonClean, c);
 
+        buttonRefresh = new JButton("Refresh");
+        c.gridx = 2;
+        c.gridy = 7;
+        c.weightx = 1;
+        c.gridwidth = 2;
+        pane1.add(buttonRefresh, c);
+
         c.fill = GridBagConstraints.HORIZONTAL;
         c.ipady = 400;       //reset to default
         c.weighty = 1.0;   //request any extra vertical space
         c.gridwidth = 4;   //2 columns wide
         c.gridx = 0;
-        c.gridy = 7;
+        c.gridy = 8;
 
         JScrollPane scrollPane = new JScrollPane(tree);
         pane1.add(scrollPane, c);
@@ -227,6 +237,7 @@ public class GUI extends JFrame implements ActionListener {
         buttonSave.addActionListener(this);
         buttonRemove.addActionListener(this);
         buttonClean.addActionListener(this);
+        buttonRefresh.addActionListener(this);
 
         return pane1;
     }
