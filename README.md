@@ -4,6 +4,8 @@
 
 This project has the objective of adding functionalities on a base code that allows a binary tree to be generated via an algorithm and be visualized.
 
+In this project openjdk@17.x will be used.
+
 ## To be added
 
 - [ ] Modify current code in order to have the b-tree keys to be associated with pointers.
